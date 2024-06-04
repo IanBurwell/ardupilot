@@ -9,7 +9,7 @@
 #define ADS1115_ADDRESS_ADDR_SCL    0x4B // address pin tied to SCL pin
 
 #define ADS1115_I2C_ADDR            ADS1115_ADDRESS_ADDR_GND
-#define ADS1115_I2C_BUS             1
+#define ADS1115_I2C_BUS             0
 
 #define ADS1115_RA_CONVERSION       0x00
 #define ADS1115_RA_CONFIG           0x01
@@ -110,7 +110,7 @@ static const uint16_t mux_table[ADS1115_CHANNELS_COUNT] = {
 
 AP_ADC_ADS1115::AP_ADC_ADS1115()
     : _dev{}
-    , _gain(ADS1115_PGA_4P096)
+    , _gain(ADS1115_PGA_6P144)
     , _channel_to_read(0)
 {
     _samples = new adc_report_s[_channels_number];
@@ -128,9 +128,9 @@ bool AP_ADC_ADS1115::init()
         return false;
     }
 
-    _gain = ADS1115_PGA_4P096;
+    _gain = ADS1115_PGA_6P144;
 
-    _dev->register_periodic_callback(100000, FUNCTOR_BIND_MEMBER(&AP_ADC_ADS1115::_update, void));
+    _dev->register_periodic_callback(10000, FUNCTOR_BIND_MEMBER(&AP_ADC_ADS1115::_update, void));
 
     return true;
 }

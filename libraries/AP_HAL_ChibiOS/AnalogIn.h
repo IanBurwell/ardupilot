@@ -18,6 +18,7 @@
 #pragma once
 
 #include "AP_HAL_ChibiOS.h"
+#include <AP_ADC/AP_ADC_ADS1115.h>
 
 // available ADC channels for allocation
 #define ANALOG_MAX_CHANNELS 16
@@ -69,6 +70,8 @@ private:
 class ChibiOS::AnalogIn : public AP_HAL::AnalogIn {
 public:
     friend class AnalogSource;
+
+    AnalogIn();
 
     void init() override;
     AP_HAL::AnalogSource* channel(int16_t pin) override;
@@ -140,6 +143,8 @@ private:
     float _mcu_voltage_min;
     float _mcu_voltage_max;
 #endif
+
+    AP_ADC_ADS1115 _ADS1115;
 };
 
 #endif // HAL_USE_ADC

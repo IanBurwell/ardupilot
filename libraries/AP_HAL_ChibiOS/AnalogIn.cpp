@@ -65,6 +65,10 @@ using namespace ChibiOS;
 
 // special pins
 #define ANALOG_SERVO_VRSSI_PIN 103
+#define ANALOG_ADS115_PIN1 201
+#define ANALOG_ADS115_PIN2 202
+#define ANALOG_ADS115_PIN3 203
+#define ANALOG_ADS115_PIN4 204
 
 /*
   scaling table between ADC count and actual input voltage, to account
@@ -202,7 +206,11 @@ bool AnalogSource::set_pin(uint8_t pin)
         return true;
     }
     bool found_pin = false;
-    if (pin == ANALOG_SERVO_VRSSI_PIN) {
+    if (pin == ANALOG_SERVO_VRSSI_PIN ||
+        pin == ANALOG_ADS115_PIN1 ||
+        pin == ANALOG_ADS115_PIN2 ||
+        pin == ANALOG_ADS115_PIN3 ||
+        pin == ANALOG_ADS115_PIN4) {
         found_pin = true;
     } else {
         for (uint8_t i=0; i<ADC_GRP1_NUM_CHANNELS; i++) {
@@ -425,6 +433,8 @@ uint8_t AnalogIn::get_num_grp_channels(uint8_t index)
     return 0;
 }
 
+AnalogIn::AnalogIn() : _ADS1115() {}
+
 /*
   setup adc peripheral to capture samples with DMA into a buffer
  */
@@ -442,6 +452,7 @@ void AnalogIn::init()
 #if defined(HAL_ANALOG3_PINS)
     setup_adc(2);
 #endif
+    _ADS1115.init();
 }
 
 void AnalogIn::setup_adc(uint8_t index)
@@ -698,6 +709,17 @@ void AnalogIn::timer_tick_adc(uint8_t index)
                     c->_add_value(buf_adc[i] * ADC_BOARD_SCALING, _board_voltage);
                 } else if (c->_pin == ANALOG_SERVO_VRSSI_PIN) {
                     c->_add_value(_rssi_voltage / VOLTAGE_SCALING, 0);
+                } else if (c->_pin == ANALOG_ADS115_PIN1 ||
+                           c->_pin == ANALOG_ADS115_PIN2 ||
+                           c->_pin == ANALOG_ADS115_PIN3 ||
+                           c->_pin == ANALOG_ADS115_PIN4){
+                    adc_report_s s[4];
+                    size_t ret = _ADS1115.read(s, 4);
+                    if(ret != 4){
+                        printf("ADS1115 read size incorrect");
+                    } else {
+                        c->_add_value(s[c->_pin-ANALOG_ADS115_PIN1].data / VOLTAGE_SCALING, 0);
+                    }
                 }
             }
         }
