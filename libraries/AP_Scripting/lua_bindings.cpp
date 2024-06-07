@@ -638,6 +638,48 @@ int AP_HAL__I2CDevice_read_registers(lua_State *L) {
     return success;
 }
 
+int AP_HAL__I2CDevice_transfer(lua_State *L) {
+    const int args = lua_gettop(L);
+    if (args != 3){
+        return luaL_argerror(L, args, "expected 2 arguments");
+    }
+    if (!lua_istable(L, 2)) {
+        return luaL_argerror(L, 2, "expected a table as the first argument");
+    }
+
+    AP_HAL::I2CDevice * ud = *check_AP_HAL__I2CDevice(L, 1);
+
+    // Parse table of bytes to send
+    uint32_t send_len = lua_rawlen(L, 2);
+    uint8_t send_data[send_len];
+    for (unsigned int i = 0; i < send_len; i++){
+        lua_rawgeti(L, 2, i + 1); // Grab value from table
+        send_data[i] = get_uint8_t(L, -1); // Parse/check uint8_t
+        lua_pop(L, 1);
+    }
+
+    // Parse and setup rx buffer
+    uint32_t rx_len = get_uint32(L, 3, 0, UINT32_MAX);
+    uint8_t rx_data[rx_len];
+
+    // Transfer
+    ud->get_semaphore()->take_blocking();
+    const bool success = static_cast<bool>(ud->transfer(send_data, send_len, rx_data, rx_len));
+    ud->get_semaphore()->give();
+
+    // Return a table
+    if (success) {
+        // push to table
+        lua_newtable(L);
+        for (uint8_t i=0; i < rx_len; i++) {
+            lua_pushinteger(L, i+1);
+            lua_pushinteger(L, rx_data[i]);
+            lua_settable(L, -3);
+        }
+    }
+    return success;
+}
+
 int AP_HAL__UARTDriver_readstring(lua_State *L) {
     binding_argcheck(L, 2);
 
