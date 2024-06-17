@@ -1109,6 +1109,14 @@ function AP_HAL__I2CDevice_ud:set_address(address) end
 ---@return table|nil
 function AP_HAL__I2CDevice_ud:transfer(data_table, read_length) end
 
+-- Performs an I2C transfer, sending data_str bytes (see string.pack) and
+-- returning a string of any requested read bytes (see string.unpack)
+---@param data_str string
+---@param read_length integer
+---@return string|nil
+function AP_HAL__I2CDevice_ud:transfer_str(data_str, read_length) end
+
+
 -- If no read length is provided a single register will be read and returned.
 -- If read length is provided a table of register values are returned.
 ---@param register_num integer

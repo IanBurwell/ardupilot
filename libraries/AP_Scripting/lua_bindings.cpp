@@ -680,6 +680,37 @@ int AP_HAL__I2CDevice_transfer(lua_State *L) {
     return success;
 }
 
+int AP_HAL__I2CDevice_transfer_str(lua_State *L) {
+    const int args = lua_gettop(L);
+    if (args != 3){
+        return luaL_argerror(L, args, "expected 2 arguments");
+    }
+    if (!lua_isstring(L, 2)) {
+        return luaL_argerror(L, 2, "expected a string as the first argument");
+    }
+
+    AP_HAL::I2CDevice * ud = *check_AP_HAL__I2CDevice(L, 1);
+
+    // Parse string of bytes to send
+    size_t send_len;
+    const uint8_t* send_data = (const uint8_t*)(lua_tolstring(L, 2, &send_len));
+
+    // Parse and setup rx buffer
+    uint32_t rx_len = get_uint32(L, 3, 0, UINT32_MAX);
+    uint8_t rx_data[rx_len];
+
+    // Transfer
+    ud->get_semaphore()->take_blocking();
+    const bool success = static_cast<bool>(ud->transfer(send_data, send_len, rx_data, rx_len));
+    ud->get_semaphore()->give();
+
+    // Return a string
+    if (success) {
+        lua_pushlstring(L, (const char *)rx_data, rx_len);
+    }
+    return success;
+}
+
 int AP_HAL__UARTDriver_readstring(lua_State *L) {
     binding_argcheck(L, 2);
 
